@@ -22,7 +22,7 @@ Leaflet is designed with simplicity, performance and usability in mind. It works
 Leaflet is one of the most popular open-source JavaScript libraries for interactive maps. It’s used by websites ranging from The New York Times and The Washington Post to GitHub and Flickr, as well as GIS specialists like OpenStreetMap, Mapbox, and CartoDB.
 
 This R package makes it easy to integrate and control Leaflet maps in R.
-```{r echo=FALSE}
+```{r echo=FALSE, warning=FALSE}
 #Example of a simple map
 
 #Check if leaflet is installed, if not install it
@@ -104,7 +104,9 @@ m <- leaflet() %>%
   addProviderTiles(providers$Esri.WorldTopoMap)%>%
   # Setview sets the intial position of the map to Scotland
   setView(lng = -5.394, lat = 56.821, zoom = 6) 
-m  # Print the map
+
+# Print the map
+m
 
 ```
 
@@ -113,24 +115,39 @@ m  # Print the map
 ## Loading Markers from a file
 This example loads the location of the 32 NFL franchises and plots them on a map.
 
-The data is in csv format and contains three columns:
+The data is in csv format and contains four columns:
 
-1. Franchise - The name of the NFL franchise
-2. Latitude - The latitude of the franchise
-3. Longitude - The longitude of the franchise
+1. Team - The name of the NFL franchise
+2. Confrence - AFC or NFC
+3. Latitude - The latitude of the franchise
+4. Longitude - The longitude of the franchise
 
 You can explore the data here
 
 ```{r echo=FALSE, warning=FALSE}
-#load the data from a csv
+#load the NFL data from a csv
 teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
 
-# Bringing in the DataTables package to display the data in a nice format
+# Load the DataTables package
 library(DT)
 
-# Using the datatable function from the DT package to see the first 6 rows of data
-datatable(head(teams))
+# Show the data using the datatable function
+datatable(teams)
 
+```
+
+By loading the data from the csv and passing it to leaflet we can display it as markers on the map.
+
+```{r}
+#Load the NFL data from the csv file
+teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
+
+m <- leaflet(teams) %>%
+  # Add default OpenStreetMap map tiles
+  addTiles() %>%
+  addCircles(~Lon, ~Lat, popup=teams$Team, weight = 6, radius=40, 
+                 color="#C83803", stroke = TRUE, fillOpacity = 0.8) 
+m  # Print the map
 ```
 
 ***
