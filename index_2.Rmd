@@ -1,0 +1,239 @@
+---
+title: "Leaflet: An introduction to creating maps with leaflet"
+author: "Barry Bullas"
+date: "25 May 2019"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Introduction
+## What is Leaflet
+Leaflet is the leading open-source JavaScript library for mobile-friendly interactive maps. Weighing just about 38 KB of JS, it has all the mapping features most developers ever need.
+
+Leaflet is designed with simplicity, performance and usability in mind. It works efficiently across all major desktop and mobile platforms, can be extended with lots of plugins, has a beautiful, easy to use and well-documented API and a simple, readable source code that is a joy to contribute to.
+
+Leaflet is one of the most popular open-source JavaScript libraries for interactive maps. It’s used by websites ranging from The New York Times and The Washington Post to GitHub and Flickr, as well as GIS specialists like OpenStreetMap, Mapbox, and CartoDB.
+
+This R package makes it easy to integrate and control Leaflet maps in R.
+```{r echo=FALSE, warning=FALSE}
+#Example of a simple map
+
+#Check if leaflet is installed, if not install it
+list.of.packages <- c("leaflet", "DT")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+#Load Leaflet package
+library(leaflet)
+
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=174.768, lat=-36.852, popup="The birthplace of R")
+m  # Print the map
+
+```
+
+## Features
+* Interactive panning/zooming
+* Compose maps using arbitrary combinations of:
+* Map tiles
+* Markers
+* Polygons
+* Lines
+* Popups
+* GeoJSON
+
+## Guidance
+You can get more information on the using the Leaflet library in r from the [Leaflet Github Repository](https://rstudio.github.io/leaflet/).  
+You can get more information on Leaflet from the [Leaflet website](https://leafletjs.com/index.html).
+[This github](https://andrewbtran.github.io/NICAR/2017/maps/leaflet-r.html#how_to_put_the_map_online) also has some helpful examples
+
+***
+
+# Building Maps
+## Getting Started
+The first thing to do when buiding leaflet maps in r is to install the leaflet package using install.packages, then attach it using the Library function.
+
+```{r eval=FALSE}
+install.packages("leaflet")
+library(leaflet)
+```
+
+***
+
+## Simple map
+You create a Leaflet map with these basic steps:
+
+Create a map widget by calling leaflet().
+
+1. Add layers (i.e., features) to the map by using layer functions (e.g. addTiles, addMarkers,  addPolygons) to modify the map widget.
+2. Repeat step 2 as desired.
+3. Print the map widget to display it.
+
+Here’s a basic example:
+```{r}
+m <- leaflet() %>%
+  # Add default OpenStreetMap map tiles
+  addTiles() %>%  
+  # add a marker for Buckhingham palace
+  addMarkers(lng=-0.1419, lat=51.5014, popup="Buckingham Palace, London") 
+m  # Print the map
+```
+
+***
+
+### Base Map Tiles
+The easiest way to add tiles is by calling addTiles() with no arguments; by default, OpenStreetMap tiles are used.
+
+There are a range of popular free third-party basemaps which can be added using the addProviderTiles() function, which is implemented using the leaflet-providers plugin. You can [view examples of each base map  here](http://leaflet-extras.github.io/leaflet-providers/preview/index.html).
+
+As a convenience, leaflet also provides a named list of all the third-party tile providers that are supported by the plugin. Just type providers$ and choose from one of the options. You can also use names(providers) to view all of the options.
+
+The example below uses the ESRI World Top Map as a basemap.  It also uses the setView function to set the intial position and zoom level of the map.  If you do not call the setView function, the default view will include any markers you have placed on the map.  As the example below does not have any markers, I have used setView to focus on a specific area rather than the intial view showing the whole world.
+
+setView allows you to specify a point on the map that you want your leaflet map to centre on.  You can get centre point coordinates, including box boundary coordinates, in many different CRS here: http://bboxfinder.com
+
+```{r}
+m <- leaflet() %>%
+  #Use the Esri World Topo Map as the basemap
+  addProviderTiles(providers$Esri.WorldTopoMap)%>%
+  # Setview sets the intial position of the map to Scotland
+  setView(lng = -5.394, lat = 56.821, zoom = 6) 
+
+# Print the map
+m
+
+```
+
+***
+
+## Loading Markers from a file
+This example loads the location of the 32 NFL franchises and plots them on a map.
+
+The data is in csv format and contains four columns:
+
+1. Team - The name of the NFL franchise
+2. Confrence - AFC or NFC
+3. Latitude - The latitude of the franchise
+4. Longitude - The longitude of the franchise
+
+You can explore the data here
+
+```{r echo=FALSE, warning=FALSE}
+#load the NFL data from a csv
+teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
+
+# Load the DataTables package
+library(DT)
+
+# Show the data using the datatable function
+datatable(teams)
+
+```
+
+By loading the data from the csv and passing it to leaflet we can display it as markers on the map.
+
+```{r}
+#Load the NFL data from the csv file
+teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
+
+m <- leaflet(teams) %>%
+  # Add default OpenStreetMap map tiles
+  addTiles() %>%
+  addCircles(~Lon, ~Lat, popup=teams$Team, weight = 3, radius=40, 
+                 color="#C83803", stroke = TRUE, fillOpacity = 1) 
+m  # Print the map
+```
+
+***
+
+## Heat map
+RLeaflet is a basic leaflet package that can be augmented with additional functions from the "leaflet.extras" packages.  Installing this package will add a lot of extra features to the leaflet package, such as making a heatmat of your data.
+
+Lets install that package and view the 'quakes' dataset that is included in RStudio;
+
+```{r echo=TRUE}
+install.packages("leaflet.extras")
+library(leaflet.extras)
+
+head(quakes)
+```
+
+As our data has WGS84 lat/long data, leaflet can project it without any issues.  Using the leaflet.extras fucntion "addWebGLHeatmap" we can display the quakes data in a heatmap.  To make the best use of the heatmap we should use a basemap that complements it.  See https://leaflet-extras.github.io/leaflet-providers/preview/ for a list of available basemaps for leaflet.extras.
+
+We'll use the ESRI WorldImagery map and set the intensity of the heat according to the magnitude of the measured earthquakes to get an idea of where the quakes are at their worst;
+
+```{r echo=TRUE}
+
+leaflet(quakes) %>% addProviderTiles(providers$Esri.WorldImagery) %>%
+  setView( 178, -20, 5 ) %>%
+    addHeatmap(lng = ~long, lat = ~lat, intensity = ~mag,
+               blur = 25, max = 0.05, radius = 12)
+
+```
+
+
+***
+
+## Cluster Map
+```{r}
+
+```
+
+***
+
+## Choropleth Map
+```{r}
+
+```
+
+***
+
+# Other features
+## Layer Groups and Layers Control
+```{r}
+
+```
+
+***
+
+## Base Maps
+```{r}
+
+```
+
+***
+
+## Custom Markers
+```{r}
+
+```
+
+***
+
+## Popups
+```{r}
+
+```
+
+***
+
+## Zoom Levels
+```{r}
+
+```
+
+***
+
+## Mini Maps
+```{r}
+
+```
+
