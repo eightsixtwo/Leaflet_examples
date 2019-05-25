@@ -107,6 +107,14 @@ m  # Print the map
 
 ***
 
+## Loading Markers from a file
+
+```{r}
+
+```
+
+***
+
 ## Heat map
 
 ```{r}
