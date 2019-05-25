@@ -81,8 +81,10 @@ Create a map widget by calling leaflet().
 Here’s a basic example:
 ```{r}
 m <- leaflet() %>%
-  addTiles() %>%  # Add default OpenStreetMap map tiles
-  addMarkers(lng=-0.1419, lat=51.5014, popup="Buckingham Palace, London") # add a marker for Buckhinham palace
+  # Add default OpenStreetMap map tiles
+  addTiles() %>%  
+  # add a marker for Buckhingham palace
+  addMarkers(lng=-0.1419, lat=51.5014, popup="Buckingham Palace, London") 
 m  # Print the map
 ```
 
