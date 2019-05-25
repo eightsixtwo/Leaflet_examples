@@ -145,8 +145,8 @@ teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
 m <- leaflet(teams) %>%
   # Add default OpenStreetMap map tiles
   addTiles() %>%
-  addCircles(~Lon, ~Lat, popup=teams$Team, weight = 6, radius=40, 
-                 color="#C83803", stroke = TRUE, fillOpacity = 0.8) 
+  addCircles(~Lon, ~Lat, popup=teams$Team, weight = 3, radius=40, 
+                 color="#C83803", stroke = TRUE, fillOpacity = 1) 
 m  # Print the map
 ```
 
