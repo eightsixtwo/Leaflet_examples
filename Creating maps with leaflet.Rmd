@@ -101,8 +101,10 @@ The example below uses the ESRI World Top Map as a basemap.  It also uses the se
 
 ```{r}
 m <- leaflet() %>%
-  addProviderTiles(providers$Esri.WorldTopoMap)%>% #Use the Esri World Topo Map as the basemap
-  setView(lng = -5.394, lat = 56.821, zoom = 6) # Setview sets the intial position of the map to Scotland
+  #Use the Esri World Topo Map as the basemap
+  addProviderTiles(providers$Esri.WorldTopoMap)%>%
+  # Setview sets the intial position of the map to Scotland
+  setView(lng = -5.394, lat = 56.821, zoom = 6) 
 m  # Print the map
 
 ```
