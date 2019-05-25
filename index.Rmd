@@ -10,8 +10,6 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-install.packages("leaflet", repos = "http://cran.us.r-project.org")
-library(leaflet)
 
 ```
 
@@ -28,7 +26,7 @@ This R package makes it easy to integrate and control Leaflet maps in R.
 #Example of a simple map
 
 #Check if leaflet is installed, if not install it
-list.of.packages <- c("leaflet")
+list.of.packages <- c("leaflet", "DT")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -55,6 +53,7 @@ m  # Print the map
 ## Guidance
 You can get more information on the using the Leaflet library in r from the [Leaflet Github Repository](https://rstudio.github.io/leaflet/).  
 You can get more information on Leaflet from the [Leaflet website](https://leafletjs.com/index.html).
+[This github](https://andrewbtran.github.io/NICAR/2017/maps/leaflet-r.html#how_to_put_the_map_online) also has some helpful examples
 
 ***
 
@@ -112,9 +111,25 @@ m  # Print the map
 ***
 
 ## Loading Markers from a file
+This example loads the location of the 32 NFL franchises and plots them on a map.
 
-```{r}
+The data is in csv format and contains three columns:
+
+1. Franchise - The name of the NFL franchise
+2. Latitude - The latitude of the franchise
+3. Longitude - The longitude of the franchise
+
+You can explore the data here
+
+```{r echo=FALSE, warning=FALSE}
 #load the data from a csv
+teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
+
+# Bringing in the DataTables package to display the data in a nice format
+library(DT)
+
+# Using the datatable function from the DT package to see the first 6 rows of data
+datatable(head(teams))
 
 ```
 
