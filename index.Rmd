@@ -52,8 +52,8 @@ m  # Print the map
 
 ## Guidance
 You can get more information on the using the Leaflet library in r from the [Leaflet Github Repository](https://rstudio.github.io/leaflet/).  
-You can get more information on Leaflet from the [Leaflet website](https://leafletjs.com/index.html).
-[This github](https://andrewbtran.github.io/NICAR/2017/maps/leaflet-r.html#how_to_put_the_map_online) also has some helpful examples
+You can get more information on Leaflet from the [Leaflet website](https://leafletjs.com/index.html){:target="_blank"}.
+[This github](https://andrewbtran.github.io/NICAR/2017/maps/leaflet-r.html#how_to_put_the_map_online){:target="_blank"} also has some helpful examples
 
 ***
 
@@ -92,7 +92,7 @@ m  # Print the map
 ### Base Map Tiles
 The easiest way to add tiles is by calling addTiles() with no arguments; by default, OpenStreetMap tiles are used.
 
-There are a range of popular free third-party basemaps which can be added using the addProviderTiles() function, which is implemented using the leaflet-providers plugin. You can [view examples of each base map  here](http://leaflet-extras.github.io/leaflet-providers/preview/index.html).
+There are a range of popular free third-party basemaps which can be added using the addProviderTiles() function, which is implemented using the leaflet-providers plugin. You can [view examples of each base map  here](http://leaflet-extras.github.io/leaflet-providers/preview/index.html){:target="_blank"}.
 
 As a convenience, leaflet also provides a named list of all the third-party tile providers that are supported by the plugin. Just type providers$ and choose from one of the options. You can also use names(providers) to view all of the options.
 
@@ -142,11 +142,13 @@ By loading the data from the csv and passing it to leaflet we can display it as 
 #Load the NFL data from the csv file
 teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
 
+#pass the dataset into leaflet
 m <- leaflet(teams) %>%
-  # Add default OpenStreetMap map tiles
-  addTiles() %>%
-  addCircles(~Lon, ~Lat, popup=teams$Team, weight = 3, radius=40, 
-                 color="#C83803", stroke = TRUE, fillOpacity = 1) 
+  # Add the Esri World Gray Canvas base map to help make the team locations stand out
+  addProviderTiles(providers$Esri.WorldGrayCanvas) %>%
+  # Add circles to the map for the teams using the Lat and Lon fields.  
+  #The popup for each circle is the team name
+  addCircles(~Lon, ~Lat, popup=teams$Team, weight = 3, radius=40, color="#C83803", stroke = TRUE, fillOpacity = 1) 
 m  # Print the map
 ```
 
