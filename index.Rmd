@@ -32,6 +32,8 @@ if(length(new.packages)) install.packages(new.packages)
 
 #Load Leaflet package
 library(leaflet)
+library(leaflet.extras)
+library(DT)
 
 m <- leaflet() %>%
   addTiles() %>%  # Add default OpenStreetMap map tiles
@@ -147,8 +149,8 @@ teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
 m <- leaflet(teams) %>%
   # Add default OpenStreetMap map tiles
   addTiles() %>%
-  addCircles(~Lon, ~Lat, popup=teams$Team, weight = 3, radius=40, 
-                 color="#C83803", stroke = TRUE, fillOpacity = 1) 
+  # add a marker for each team using the TeamName variable as 
+  addMarkers(~Lon, ~Lat, ~TeamName)
 m  # Print the map
 ```
 
@@ -159,11 +161,23 @@ RLeaflet is a basic leaflet package that can be augmented with additional functi
 
 Lets install that package and view the 'quakes' dataset that is included in RStudio;
 
-```{r echo=TRUE}
+```{r echo=TRUE, eval=FALSE}
 install.packages("leaflet.extras")
 library(leaflet.extras)
 
-head(quakes)
+# Load the DataTables package
+library(DT)
+
+# Show the data using the datatable function
+datatable(quakes)
+```
+
+```{r echo=false, warning=FALSE}
+# Load the DataTables package
+library(DT)
+
+# Show the data using the datatable function
+datatable(quakes)
 ```
 
 As our data has WGS84 lat/long data, leaflet can project it without any issues.  Using the leaflet.extras fucntion "addWebGLHeatmap" we can display the quakes data in a heatmap.  To make the best use of the heatmap we should use a basemap that complements it.  See https://leaflet-extras.github.io/leaflet-providers/preview/ for a list of available basemaps for leaflet.extras.
