@@ -1,6 +1,6 @@
 ---
 title: "Leaflet: An introduction to creating maps with leaflet"
-author: "Barry Bullas"
+author: "Barry Bullas - Anthony Foster"
 date: "25 May 2019"
 output: 
   html_document:
@@ -22,16 +22,25 @@ Leaflet is designed with simplicity, performance and usability in mind. It works
 Leaflet is one of the most popular open-source JavaScript libraries for interactive maps. It’s used by websites ranging from The New York Times and The Washington Post to GitHub and Flickr, as well as GIS specialists like OpenStreetMap, Mapbox, and CartoDB.
 
 This R package makes it easy to integrate and control Leaflet maps in R.
+
+A cheatsheet for this package is here: https://ugoproto.github.io/ugo_r_doc/leaflet-cheat-sheet.pdf
+
 ```{r echo=FALSE, warning=FALSE}
 #Example of a simple map
 
 #Check if leaflet is installed, if not install it
-list.of.packages <- c("leaflet", "DT")
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
-
-#Load Leaflet package
+require("leaflet")
+require("DT")
+require("readr")
 library(leaflet)
+library(DT)
+library(readr)
+
+# Add leaflet extras
+require("leaflet.extras")
+library(leaflet.extras)
+
+# A simple map...
 
 m <- leaflet() %>%
   addTiles() %>%  # Add default OpenStreetMap map tiles
@@ -128,7 +137,7 @@ You can explore the data here
 
 ```{r echo=FALSE, warning=FALSE}
 #load the NFL data from a csv
-teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
+teams <- read_csv("data/nfl_franchises.csv")
 
 # Load the DataTables package
 library(DT)
@@ -142,7 +151,7 @@ By loading the data from the csv and passing it to leaflet we can display it as 
 
 ```{r}
 #Load the NFL data from the csv file
-teams <- read.csv("data/nfl_franchises.csv", stringsAsFactors=F)
+teams <- read_csv("data/nfl_franchises.csv")
 
 m <- leaflet(teams) %>%
   # Add default OpenStreetMap map tiles
@@ -157,12 +166,9 @@ m  # Print the map
 ## Heat map
 RLeaflet is a basic leaflet package that can be augmented with additional functions from the "leaflet.extras" packages.  Installing this package will add a lot of extra features to the leaflet package, such as making a heatmat of your data.
 
-Lets install that package and view the 'quakes' dataset that is included in RStudio;
+The leaflet.extras package is already installed, so lets view the 'quakes' dataset that is included in RStudio;
 
-```{r echo=TRUE}
-install.packages("leaflet.extras")
-library(leaflet.extras)
-
+```{r echo=FALSE}
 head(quakes)
 ```
 
@@ -183,9 +189,48 @@ leaflet(quakes) %>% addProviderTiles(providers$Esri.WorldImagery) %>%
 ***
 
 ## Cluster Map
-```{r}
+
+RLeaflet can 'cluster' points together to provide an aggregated view.  This can be quite hard to understand without the aid of an example, so let's use UK accidents data from 2017.  
+
+This is freely available data that provides details of approximately 130,000 accident locations across the UK, including speed, number of vehicles involved and several more variables.  A csv of the data is available in this repository.
+
+```{r warning=FALSE}
+uk_acc_2017 <- read_csv("uk_accidents_2017.csv")
+#remove missing values from lat/long
+uk_acc_2017 <- uk_acc_2017[complete.cases(uk_acc_2017[, 4:5]),]
+
+head(uk_acc_2017[,4:12])
 
 ```
+
+Lets do a simple plot of the points on a map to see how the raw data looks;
+
+```{r echo=FALSE}
+leaflet(uk_acc_2017) %>%
+  # Use OpenStreetMap as the basemap
+  addProviderTiles(providers$OpenStreetMap.Mapnik)%>%
+  setView(lng = -4, lat = 54, zoom = 7) %>%
+  # Add clustered points to the map
+  addCircles(radius = 3, opacity = 0.75)
+
+
+```
+
+Striking but not very easy to interpret.  There are so many points that much of the land is completely covered, making it very difficult to understand how accidents are spread across the country.
+
+Next, lets add the clustering function to aggregate some of those points together;
+
+```{r echo=TRUE}
+leaflet(uk_acc_2017) %>%
+  # Use OpenStreetMap as the basemap
+  addProviderTiles(providers$OpenStreetMap.Mapnik)%>%
+  setView(lng = -4, lat = 54, zoom = 7) %>%
+  # Add clustered points to the map
+  addMarkers(clusterOptions = markerClusterOptions() )
+```
+
+Try zooming in and out.  Notice how the clustering is amended depending on zoom level?  Clustering makes the data easier to interpret.  Hover over one of the numbered points and you will see the outline of the area that it represents.
+
 
 ***
 
