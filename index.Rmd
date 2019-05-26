@@ -2,7 +2,7 @@
 title: "Leaflet: An introduction to creating maps with leaflet"
 author: "Barry Bullas - Anthony Foster"
 date: "25 May 2019"
-output: 
+output:
   html_document:
     toc: true
     toc_float: true
@@ -92,7 +92,7 @@ m <- leaflet() %>%
   # Add default OpenStreetMap map tiles
   addTiles() %>%  
   # add a marker for Buckhingham palace
-  addMarkers(lng=-0.1419, lat=51.5014, popup="Buckingham Palace, London") 
+  addMarkers(lng=-0.1419, lat=51.5014, popup="Buckingham Palace, London")
 m  # Print the map
 ```
 
@@ -114,7 +114,7 @@ m <- leaflet() %>%
   #Use the Esri World Topo Map as the basemap
   addProviderTiles(providers$Esri.WorldTopoMap)%>%
   # Setview sets the intial position of the map to Scotland
-  setView(lng = -5.394, lat = 56.821, zoom = 6) 
+  setView(lng = -5.394, lat = 56.821, zoom = 6)
 
 # Print the map
 m
@@ -156,8 +156,8 @@ teams <- read_csv("data/nfl_franchises.csv")
 m <- leaflet(teams) %>%
   # Add default OpenStreetMap map tiles
   addTiles() %>%
-  addCircles(~Lon, ~Lat, popup=teams$Team, weight = 3, radius=40, 
-                 color="#C83803", stroke = TRUE, fillOpacity = 1) 
+  # add a marker for each team using the TeamName variable as
+  addMarkers(~Lon, ~Lat, popup = ~TeamName)
 m  # Print the map
 ```
 
@@ -281,4 +281,3 @@ Try zooming in and out.  Notice how the clustering is amended depending on zoom 
 ```{r}
 
 ```
-
