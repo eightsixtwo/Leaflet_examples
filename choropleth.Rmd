@@ -1,0 +1,216 @@
+---
+title: "Leaflet: An Introduction to Choropleth maps in Rleaflet"
+author: "Anthony Foster"
+date: "31 May 2019"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Introduction
+
+Leaflet is the leading open-source JavaScript library for mobile-friendly interactive maps. Weighing just about 38 KB of JS, it has all the mapping features most developers ever need.
+
+Leaflet is designed with simplicity, performance and usability in mind. It works efficiently across all major desktop and mobile platforms, can be extended with lots of plugins, has a beautiful, easy to use and well-documented API and a simple, readable source code that is a joy to contribute to.
+
+Leaflet is one of the most popular open-source JavaScript libraries for interactive maps. Its used by websites ranging from The New York Times and The Washington Post to GitHub and Flickr, as well as GIS specialists like OpenStreetMap, Mapbox, and CartoDB.
+
+This R package makes it easy to integrate and control Leaflet maps in R.
+
+A cheatsheet for this package is here: https://ugoproto.github.io/ugo_r_doc/leaflet-cheat-sheet.pdf
+
+```{r echo=TRUE, warning=FALSE}
+#Example of a simple map
+
+#Check if leaflet is installed, if not install it
+require("leaflet")
+require("DT")
+
+# Add leaflet extras
+require("leaflet.extras")
+
+# A simple map...
+
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=174.768, lat=-36.852, popup="The birthplace of R")
+m  # Print the map
+
+```
+
+## Guidance
+You can get more information on the using the Leaflet library in r from the [Leaflet Github Repository](https://rstudio.github.io/leaflet/).  
+You can get more information on Leaflet from the [Leaflet website](https://leafletjs.com/index.html).
+[This github](https://andrewbtran.github.io/NICAR/2017/maps/leaflet-r.html#how_to_put_the_map_online) also has some helpful examples
+
+***
+
+## Choropleth Map
+
+A choropleth map allows us to view data by shading areas of a map according to values within those areas.  
+
+In order to do this we are going to need to add polygons to the map, ready for us to overlay our points.  Shading can be applied depending on how many points fall within each polygon.
+
+To demonstrate this, a file has been added to the repo contianing regions of the UK - this is open source and freely available from the ONS.
+
+
+## Getting Started
+The first thing to do when creating a choropleth leaflet map using RLeaflet is to load the required packages;
+
+```{r}
+require("readr")
+require("rgdal")
+require("sf")
+require("dplyr")
+
+```
+
+## Data to be plotted
+
+Next, lets read in the accidents data using readr function 'read_csv';
+uk_accidents_2017 <- read_csv(file = "uk_accidents_2017.csv")
+
+```{r echo=TRUE}
+uk_accidents_2017 <- read_csv(file = "uk_accidents_2017.csv")
+
+```
+
+
+
+ It's always a good idea to become familiar with the data;
+```{r}
+head(uk_accidents_2017)
+
+```
+
+Each row in the dataset refers to a single accident that occured somewhere in England.  This dataset has some interesting items in it that you may wish to perform analysis on such as; information on severity, date, time, location, number casualties and number of vehicles. There is also an indentifier that can help us link to several of the Ordanance Survey boundaries that you may wish to bring in later.
+
+Lets subset the accidents data for variables we want to visualise on a choropleth map.  For this example we'll just keep our joining variable, 'rgn' which links to a region shapefile, and we'll create a simple count of the number of accidents in each region;
+
+```{r}
+uk_accidents_2017 <- uk_accidents_2017 %>%
+  select(rgn) %>%
+  group_by(rgn) %>%
+  mutate(count = n()) %>%
+  distinct()
+head(uk_accidents_2017)
+
+```
+NOTE: The joining keys 'rgn', 'lsoa11' and 'msoa11' were added to the data prior to this example being compiled.
+
+To recap, we've brought in a dataset that contains data we may wish to plot on a map. The data could be used to create points as they have lat/long coordinates but it does not contain the necessary data to plot polygons. 
+
+## Polygons
+
+Polygons are more complex and require several elements for RLeaflet to be able to plot them, such as coordinates of each point that makes up the polygon, the boundary box in which the polygon will be plotted and the Coordinate Reference System (CRS) that is used to calculate where the polygons should be placed on the map. 
+
+As such, we need to bring in another file that contains this data.
+
+So, lets read in a shapefile (.shp) that contains the polygons we need.  Because shapefiles are more complex than simple tables they need to be loaded into an object of class 'SpatialPolygonsDataFrame'.  We do this by loading the file in using a specific function: 'readOGR'.  The 'readOGR' is a function of the 'rgdal' package.
+
+The complex nature of the SPatialPolygonsDataFrame can be explored by looking at the different parts that make them up.  Each SpatialPolygonDataFrame has 'slots' that each contain differnt parts.  A basic way to explain their structure can be to think of them as a datafram of lists, with each list being different to the others.  
+
+Before doing this you will need to ensure a copy of the shapefile is in the working directory as the 'readOGR' function requires a reference to the file location.  
+
+Lets load it into an object ('shapes') and take a look at the names of the 'slots';
+
+```{r}
+shapes <- readOGR(dsn=getwd(), layer = "Regions_December_2018_EN_BFC")
+slotNames(shapes)
+
+```
+
+Notice that there are the following 'slots';
+- data: data related to the polygons
+- polygons: point coordinates of each point that makes up the polygon
+- plotorder: a simple mnemonic that dictates the order in which the polygons will be plotted
+- bbox: the boundary box in which the polygon will fit
+- proj4string: information on the CRS and projection of the polygons
+
+Let's take a look at the structure of the SpatialPolygonsDataFrame as this will help you understand the next steps we need to take before the map can be plotted.  
+
+```{r}
+glimpse(shapes)
+glimpse(shapes@proj4string)
+
+```
+
+The shapefile is projected in a different CRS to the standard CRS used by leaflet: transverse mercator (tmerc) using the GB36 datum. This information is stored in this section;
+
+proj4string :[+proj=tmerc +lat_0=49 
+         +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +datum=OSGB36 +units=m +no_defs
+
+
+By default, OS boundaries are stored in the GB1936 CRS.  We can either change the CRS being used by leaflet or transform the polygons data to a more faviourable CRS.  Transforming is easier, lets change the CRS on the polygons to the same as the standard CRS in leaflet - WGS84 (also known as EPSG:4326).
+
+To transform one CRS to another we can use the 'spTransform' function of the 'sp' package and we'll check that the transformation has been completed;
+
+```{r}
+shapesWGS84 <- spTransform(shapes, CRS('+init=epsg:4326'))
+glimpse(shapesWGS84@proj4string)
+
+```
+```{r echo=TRUE}
+plot(shapesWGS84)
+```
+
+So, we have our polygons ready to plot on a map but we are still not ready to take this step just yet.  Every shapefile has a data portion that contains data about the polygons. The content of the data portion varies depending on the shapefile you are using.  We can take take a closer look the structure the data portion by referencing that slot with '@';
+
+```{r}
+str(shapesWGS84@data)
+
+```
+
+We can join the accident data we prepared to our polygons data using a simple join.  But in order to do that, we are going to need to clean up the data portion first;
+
+```{r}
+# region was read in as a factor, which will affect any joins.  change region data type from factor to char
+shapesWGS84@data$rgn18cd <- as.character(shapes@data$rgn18cd)
+
+# also, lets rename the region column for ease of use
+colnames(shapesWGS84@data)[2] = "rgn"
+
+```
+
+Now, we can do our join!  The follwoing join will bring in all columns from our accident data, although in this case there is only the 'count' column to bring;
+
+```{r}
+shapesWGS84@data <- shapesWGS84@data %>%
+  left_join(uk_accidents_2017, by = "rgn")
+
+# check it worked
+head(shapesWGS84@data)
+
+```
+Success!  Our 'count' column is at the very end of the data!  Now, if we plot our polygons, the 'count' data will be available for us to reference on the map.
+
+A good example of using our newly joined count of accidents in each location data is to colour each polygon based on this value.  To do this we will create a colour palette using 'colorBin' and then add it to the polygons when they are plotted on our leaflet map using 'addPolygons'.
+
+
+```{r}
+# create colour palette for gradiated choropleth
+accPal <- colorBin("Reds", domain = shapesWGS84@data$count)
+
+# start adding options to customise the map;
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data= shapesWGS84 ,weight = 1, color = ~accPal(count),
+              # a label will appear when we hover over each polygon
+              label = shapesWGS84@data$rgn18nm,
+              # a popup will only appear when we click on a polygon
+              popup = ~paste0( "<h3>", rgn18nm, "</h3>", "No.of Accidents: ", count),
+              # highlights are shown on a polygon when you hover over it
+              highlight = highlightOptions(weight = 2, color = "blue", bringToFront = TRUE)
+              )
+
+```
+
+
+## That's all folks!  :)
+
